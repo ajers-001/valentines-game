@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>A Valentine's Day — Ajer & Jarin</title>
+<title>A Valentine's Day — Ajer & Jarin (Multiplayer)</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 body{overflow:hidden;background:#0D1B2A;font-family:'Segoe UI',system-ui,sans-serif}
@@ -14,9 +14,31 @@ canvas{display:block}
 #title-screen h2{color:#FF69B4;font-size:min(22px,4vw);font-weight:400;text-shadow:0 0 20px rgba(255,105,180,0.4);margin-bottom:30px}
 #title-screen p.desc{color:#C77DFF;font-size:14px;max-width:420px;text-align:center;line-height:1.7;margin-bottom:36px;opacity:0.85;padding:0 20px}
 .emoji-big{font-size:72px;margin-bottom:20px}
-#start-btn{background:linear-gradient(135deg,#E74C3C,#C0392B);color:#FFF;border:none;padding:16px 48px;font-size:20px;border-radius:40px;cursor:pointer;letter-spacing:3px;font-weight:600;box-shadow:0 0 40px rgba(231,76,60,0.4);transition:transform 0.2s}
-#start-btn:hover{transform:scale(1.06)}
+.menu-btn{background:linear-gradient(135deg,#E74C3C,#C0392B);color:#FFF;border:none;padding:14px 40px;font-size:17px;border-radius:40px;cursor:pointer;letter-spacing:2px;font-weight:600;box-shadow:0 0 30px rgba(231,76,60,0.3);transition:transform 0.2s;margin:6px;min-width:200px}
+.menu-btn:hover{transform:scale(1.06)}
+.menu-btn.secondary{background:linear-gradient(135deg,#9B59B6,#8E44AD)}
+.menu-btn.tertiary{background:linear-gradient(135deg,#3498DB,#2980B9)}
+.menu-btn.small{padding:10px 24px;font-size:14px;min-width:auto}
 .controls-hint{color:#666;font-size:12px;margin-top:28px;letter-spacing:1px}
+.lobby-panel{display:none;flex-direction:column;align-items:center;gap:12px;margin-top:20px}
+.lobby-panel.active{display:flex}
+.room-code{font-size:48px;letter-spacing:12px;color:#FFD700;font-weight:700;text-shadow:0 0 20px rgba(255,215,0,0.4);font-family:monospace}
+.lobby-status{color:#C77DFF;font-size:14px;animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.5}}
+.code-input{background:rgba(255,255,255,0.1);border:2px solid #FFD700;color:#FFD700;font-size:28px;letter-spacing:8px;text-align:center;padding:12px 20px;border-radius:12px;width:240px;font-family:monospace;text-transform:uppercase}
+.code-input::placeholder{color:rgba(255,215,0,0.3);letter-spacing:4px;font-size:18px}
+.code-input:focus{outline:none;border-color:#FF69B4;box-shadow:0 0 20px rgba(255,105,180,0.3)}
+#mp-hud{position:fixed;top:60px;right:20px;z-index:10;display:none;flex-direction:column;gap:6px;align-items:flex-end;pointer-events:none}
+#conn-status{padding:6px 14px;border-radius:8px;font-size:12px;font-weight:600;backdrop-filter:blur(8px)}
+#conn-status.connected{background:rgba(46,204,113,0.2);color:#2ECC71;border:1px solid rgba(46,204,113,0.3)}
+#conn-status.disconnected{background:rgba(231,76,60,0.2);color:#E74C3C;border:1px solid rgba(231,76,60,0.3)}
+#role-label{background:rgba(0,0,0,0.65);color:#C77DFF;padding:6px 14px;border-radius:8px;font-size:12px;backdrop-filter:blur(8px);border:1px solid rgba(199,125,255,0.2)}
+#dc-overlay{position:fixed;inset:0;z-index:80;background:rgba(0,0,0,0.75);display:none;flex-direction:column;align-items:center;justify-content:center;backdrop-filter:blur(4px)}
+#dc-overlay.active{display:flex}
+#dc-overlay h2{color:#E74C3C;font-size:24px;margin-bottom:8px}
+#dc-overlay p{color:#C77DFF;font-size:14px;max-width:400px;text-align:center;line-height:1.6}
+#dc-overlay button{margin-top:20px}
+.menu-buttons{display:flex;flex-direction:column;align-items:center;gap:0}
 #hud{position:fixed;top:0;left:0;right:0;z-index:10;pointer-events:none;padding:16px 20px;display:none;justify-content:space-between}
 #episode-label{background:rgba(0,0,0,0.65);color:#FFD700;padding:8px 18px;border-radius:8px;font-size:14px;font-weight:600;backdrop-filter:blur(8px);border:1px solid rgba(255,215,0,0.2)}
 #egg-counter{background:rgba(0,0,0,0.65);color:#FF69B4;padding:8px 18px;border-radius:8px;font-size:13px;backdrop-filter:blur(8px);border:1px solid rgba(255,105,180,0.2)}
@@ -42,8 +64,24 @@ canvas{display:block}
   <h1>A Valentine's Day</h1>
   <h2>with Ajer & Jarin</h2>
   <p class="desc">A love story in 5 episodes. Explore each scene, discover hidden Easter eggs, and experience what Valentine's Day would look like if we were together. 💕</p>
-  <button id="start-btn" onclick="beginGame()">♥ START GAME ♥</button>
-  <a href="multiplayer.html" style="display:inline-block;margin-top:10px;background:linear-gradient(135deg,#9B59B6,#8E44AD);color:#FFF;border:none;padding:12px 36px;font-size:16px;border-radius:40px;cursor:pointer;letter-spacing:2px;font-weight:600;box-shadow:0 0 30px rgba(155,89,182,0.3);text-decoration:none;transition:transform 0.2s" onmouseover="this.style.transform='scale(1.06)'" onmouseout="this.style.transform='scale(1)'">♥ PLAY TOGETHER ♥</a>
+  <div id="main-menu" class="menu-buttons">
+    <button class="menu-btn" onclick="beginGame()">♥ SINGLE PLAYER ♥</button>
+    <button class="menu-btn secondary" onclick="showHostPanel()">HOST GAME</button>
+    <button class="menu-btn tertiary" onclick="showJoinPanel()">JOIN GAME</button>
+  </div>
+  <div id="host-panel" class="lobby-panel">
+    <p style="color:#FF69B4;font-size:16px;font-weight:600">Share this code with your partner:</p>
+    <div id="host-code" class="room-code">------</div>
+    <p id="host-status" class="lobby-status">Waiting for partner...</p>
+    <button class="menu-btn small" onclick="showMainMenu()">Back</button>
+  </div>
+  <div id="join-panel" class="lobby-panel">
+    <p style="color:#FF69B4;font-size:16px;font-weight:600">Enter your partner's room code:</p>
+    <input id="join-input" class="code-input" type="text" maxlength="6" placeholder="CODE" autocomplete="off" spellcheck="false">
+    <button class="menu-btn tertiary" onclick="joinGame()">CONNECT</button>
+    <p id="join-status" class="lobby-status" style="animation:none;opacity:0">&nbsp;</p>
+    <button class="menu-btn small" onclick="showMainMenu()">Back</button>
+  </div>
   <p class="controls-hint">WASD / Arrow Keys to move · Space / Click to advance</p>
 </div>
 <div id="hud"><div id="episode-label"></div><div id="egg-counter">🌟 Eggs: 0/4</div></div>
@@ -59,7 +97,10 @@ canvas{display:block}
   <p style="color:#FFF;font-size:20px;font-style:italic;margin-top:8px">— Ajer</p>
   <button onclick="location.reload()" style="margin-top:24px;background:transparent;color:#C77DFF;border:1px solid #C77DFF;padding:10px 24px;font-size:14px;border-radius:20px;cursor:pointer;font-family:inherit">Play Again ♥</button>
 </div>
+<div id="mp-hud"><div id="conn-status" class="connected">Connected</div><div id="role-label">Playing as: ---</div></div>
+<div id="dc-overlay"><h2>Disconnected</h2><p id="dc-msg">Your partner has disconnected. The game will continue in single-player mode.</p><button class="menu-btn small" onclick="document.getElementById('dc-overlay').classList.remove('active')">Continue</button></div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
 <script>
 "use strict";
 if(typeof THREE==='undefined'){document.body.innerHTML='<div style="color:red;padding:40px;font-size:20px">Three.js failed to load. Please check network.</div>';throw new Error('THREE not loaded');}
@@ -113,6 +154,227 @@ var G={ep:-1,si:0,di:0,showing:false,keys:{},trig:{},eggs:{},eggN:0,started:fals
   ph:0,phT:0,wp:null,wpI:0,rwp:null,rwI:0,typing:false,tyI:null,fullTxt:"",
   camLk:null,aeT:0,aeR:false,dropping:false,cutscene:false,cutT:0,asleep:false};
 var scene,camera,renderer,clock,player,ajer,epO=[];
+
+// ===================== MULTIPLAYER STATE =====================
+var MP={active:false,isHost:false,peer:null,conn:null,roomCode:'',
+  connected:false,lastSend:0,remotePos:null,remoteMoving:false,
+  lastSync:0,localChar:null,remoteChar:null};
+
+function genRoomCode(){
+  var c='ABCDEFGHJKLMNPQRSTUVWXYZ23456789',r='';
+  for(var i=0;i<6;i++)r+=c[Math.floor(Math.random()*c.length)];
+  return r;
+}
+
+function showMainMenu(){
+  document.getElementById('main-menu').style.display='flex';
+  document.getElementById('host-panel').classList.remove('active');
+  document.getElementById('join-panel').classList.remove('active');
+  if(MP.peer){MP.peer.destroy();MP.peer=null;}
+}
+
+function showHostPanel(){
+  document.getElementById('main-menu').style.display='none';
+  document.getElementById('host-panel').classList.add('active');
+  hostGame();
+}
+
+function showJoinPanel(){
+  document.getElementById('main-menu').style.display='none';
+  document.getElementById('join-panel').classList.add('active');
+  document.getElementById('join-input').value='';
+  document.getElementById('join-status').style.opacity='0';
+  setTimeout(function(){document.getElementById('join-input').focus();},100);
+}
+
+function hostGame(){
+  MP.roomCode=genRoomCode();
+  document.getElementById('host-code').textContent=MP.roomCode;
+  document.getElementById('host-status').textContent='Waiting for partner...';
+  MP.isHost=true;
+  try{
+    MP.peer=new Peer('vday-'+MP.roomCode,{debug:0});
+    MP.peer.on('open',function(){
+      document.getElementById('host-status').textContent='Room ready! Waiting for partner...';
+    });
+    MP.peer.on('connection',function(conn){
+      MP.conn=conn;
+      setupConnection();
+    });
+    MP.peer.on('error',function(err){
+      console.error('PeerJS host error:',err);
+      document.getElementById('host-status').textContent='Error: '+err.type+'. Try again.';
+      document.getElementById('host-status').style.color='#E74C3C';
+    });
+  }catch(e){
+    document.getElementById('host-status').textContent='PeerJS failed to load. Check network.';
+  }
+}
+
+function joinGame(){
+  var code=document.getElementById('join-input').value.trim().toUpperCase();
+  if(code.length!==6){
+    var s=document.getElementById('join-status');s.textContent='Enter a 6-character code';s.style.opacity='1';s.style.color='#E74C3C';return;
+  }
+  var s=document.getElementById('join-status');s.textContent='Connecting...';s.style.opacity='1';s.style.color='#C77DFF';s.style.animation='pulse 2s infinite';
+  MP.isHost=false;
+  try{
+    MP.peer=new Peer(undefined,{debug:0});
+    MP.peer.on('open',function(){
+      MP.conn=MP.peer.connect('vday-'+code,{reliable:true});
+      MP.conn.on('open',function(){setupConnection();});
+      MP.conn.on('error',function(err){
+        s.textContent='Connection failed. Check the code.';s.style.color='#E74C3C';s.style.animation='none';
+      });
+    });
+    MP.peer.on('error',function(err){
+      console.error('PeerJS join error:',err);
+      if(err.type==='peer-unavailable'){s.textContent='Room not found. Check the code.';}
+      else{s.textContent='Error: '+err.type;}
+      s.style.color='#E74C3C';s.style.animation='none';
+    });
+  }catch(e){
+    s.textContent='PeerJS failed to load. Check network.';s.style.color='#E74C3C';s.style.animation='none';
+  }
+}
+
+function setupConnection(){
+  MP.active=true;MP.connected=true;
+  MP.conn.on('data',function(data){handleMessage(data);});
+  MP.conn.on('close',function(){handleDisconnect();});
+  MP.conn.on('error',function(){handleDisconnect();});
+  // Update UI
+  if(MP.isHost){
+    document.getElementById('host-status').textContent='Partner connected! Starting...';
+    document.getElementById('host-status').style.color='#2ECC71';
+  }else{
+    var s=document.getElementById('join-status');s.textContent='Connected! Starting...';s.style.color='#2ECC71';s.style.animation='none';
+  }
+  // Show MP HUD
+  document.getElementById('mp-hud').style.display='flex';
+  document.getElementById('conn-status').className='connected';
+  document.getElementById('conn-status').textContent='Connected';
+  document.getElementById('role-label').textContent='Playing as: '+(MP.isHost?'Ajer':'Jarin');
+  // Start game after brief delay
+  setTimeout(function(){beginGame();},800);
+}
+
+function mpSend(data){
+  if(!MP.conn||!MP.connected)return;
+  try{MP.conn.send(data);}catch(e){}
+}
+
+function mpSendPos(){
+  if(!MP.active||!MP.connected||!MP.localChar)return;
+  var now=performance.now();
+  if(now-MP.lastSend<50)return; // 20Hz
+  MP.lastSend=now;
+  mpSend({t:'pos',x:MP.localChar.position.x,y:MP.localChar.position.y,z:MP.localChar.position.z,
+    ry:MP.localChar.rotation.y,m:MP.localChar.userData._moving||false});
+}
+
+function handleMessage(data){
+  if(!data||!data.t)return;
+  switch(data.t){
+    case 'pos':
+      MP.remotePos={x:data.x,y:data.y,z:data.z,ry:data.ry};
+      MP.remoteMoving=data.m;
+      break;
+    case 'dlg_show':
+      // Guest receives dialogue from host
+      if(!MP.isHost){
+        G.si=data.si;G.di=data.di;
+        showDlgLocal(data.speaker,data.text);
+      }
+      break;
+    case 'dlg_hide':
+      if(!MP.isHost)hideDlgLocal();
+      break;
+    case 'dlg_adv':
+      // Host tells guest to skip typing
+      if(!MP.isHost){
+        if(G.typing){clearInterval(G.tyI);document.getElementById('dialogue-text').textContent=G.fullTxt;G.typing=false;}
+      }
+      break;
+    case 'ep_trans':
+      if(!MP.isHost)transitionEpLocal(data.ep,data.title,data.sub);
+      break;
+    case 'trigger':
+      if(!MP.isHost){
+        G.trig[data.key]=true;
+        if(data.isEgg)foundEgg(data.eggName);
+      }
+      break;
+    case 'cutscene':
+      if(!MP.isHost){
+        G.cutscene=data.active;
+        if(data.asleep&&!G.asleep){
+          G.asleep=true;
+          // Add zzz sprite on guest side
+          if(player){
+            var zCv=document.createElement('canvas');zCv.width=128;zCv.height=64;var zCx=zCv.getContext('2d');
+            zCx.fillStyle='#C77DFF';zCx.font='bold 28px system-ui';zCx.textAlign='center';zCx.fillText('\u{1F4A4} zzz...',64,40);
+            var zS=new THREE.Sprite(new THREE.SpriteMaterial({map:new THREE.CanvasTexture(zCv),transparent:true}));
+            zS.position.set(player.position.x,2.3,player.position.z);zS.scale.set(1,0.5,1);
+            zS.userData={isZzz:true,fi:0};A(zS);
+          }
+        }
+      }
+      break;
+    case 'state_sync':
+      if(!MP.isHost){
+        G.trig=data.trig||{};G.eggs=data.eggs||{};G.eggN=data.eggN||0;
+        G.ph=data.ph||0;G.cutscene=data.cutscene||false;G.asleep=data.asleep||false;
+        document.getElementById('egg-counter').textContent='\u{1F31F} Eggs: '+G.eggN+'/4';
+      }
+      break;
+    case 'game_end':
+      if(!MP.isHost)showEnd();
+      break;
+  }
+}
+
+function showDlgLocal(speaker,text){
+  var box=document.getElementById('dialogue-box');
+  var spk=document.getElementById('speaker-name');
+  var txt=document.getElementById('dialogue-text');
+  box.classList.add('active');
+  spk.textContent=speaker||'';spk.style.display=speaker?'block':'none';
+  var ci=0;txt.textContent='';G.typing=true;G.fullTxt=text;G.showing=true;
+  clearInterval(G.tyI);
+  G.tyI=setInterval(function(){if(ci<text.length){txt.textContent+=text[ci];ci++;}else{clearInterval(G.tyI);G.typing=false;}},30);
+}
+
+function hideDlgLocal(){
+  document.getElementById('dialogue-box').classList.remove('active');G.showing=false;
+}
+
+function transitionEpLocal(n,title,sub){
+  if(n>=5){showEnd();return;}
+  var el=document.getElementById('ep-trans');
+  document.getElementById('et-title').textContent=title;
+  document.getElementById('et-sub').textContent=sub;
+  el.classList.add('active');
+  setTimeout(function(){loadEp(n);},1200);
+  setTimeout(function(){el.classList.remove('active');},2400);
+}
+
+function handleDisconnect(){
+  MP.connected=false;MP.active=false;
+  document.getElementById('conn-status').className='disconnected';
+  document.getElementById('conn-status').textContent='Disconnected';
+  var msg=MP.isHost?'Jarin has disconnected. Continuing in single-player mode.':'Ajer has disconnected. You can keep exploring, but dialogue won\'t advance.';
+  document.getElementById('dc-msg').textContent=msg;
+  document.getElementById('dc-overlay').classList.add('active');
+}
+
+function mpSendStateSync(){
+  if(!MP.active||!MP.isHost||!MP.connected)return;
+  var now=performance.now();
+  if(now-MP.lastSync<5000)return;
+  MP.lastSync=now;
+  mpSend({t:'state_sync',trig:G.trig,eggs:G.eggs,eggN:G.eggN,ph:G.ph,cutscene:G.cutscene,asleep:G.asleep});
+}
 
 // ===================== THREE SETUP =====================
 function initThree(){
@@ -896,11 +1158,22 @@ function showDlg(si,di){
   clearInterval(G.tyI);
   G.tyI=setInterval(function(){if(ci<full.length){txt.textContent+=full[ci];ci++;}else{clearInterval(G.tyI);G.typing=false;}},30);
   G.showing=true;
+  // Host broadcasts dialogue to guest
+  if(MP.active&&MP.isHost)mpSend({t:'dlg_show',si:si,di:di,speaker:d.s||'',text:d.t});
 }
-function hideDlg(){document.getElementById('dialogue-box').classList.remove('active');G.showing=false;}
+function hideDlg(){
+  document.getElementById('dialogue-box').classList.remove('active');G.showing=false;
+  if(MP.active&&MP.isHost)mpSend({t:'dlg_hide'});
+}
 function advDlg(){
   if(!G.showing)return;
-  if(G.typing){clearInterval(G.tyI);document.getElementById('dialogue-text').textContent=G.fullTxt;G.typing=false;return;}
+  // Guest cannot advance dialogue
+  if(MP.active&&!MP.isHost)return;
+  if(G.typing){
+    clearInterval(G.tyI);document.getElementById('dialogue-text').textContent=G.fullTxt;G.typing=false;
+    if(MP.active&&MP.isHost)mpSend({t:'dlg_adv'});
+    return;
+  }
   var scr=SCRIPTS[G.ep][G.si];
   G.di++;
   if(G.di<scr.d.length){showDlg(G.si,G.di);return;}
@@ -918,6 +1191,12 @@ function loadEp(n){
   try{[buildEp1,buildEp2,buildEp3,buildEp4,buildEp5][n]();}catch(e){console.error("Build EP"+n+" failed:",e);}
   player=mkChar("jarin",o.j);player.position.set(st.jx,st.jy,st.jz);scene.add(player);
   ajer=mkChar("ajer",o.a);ajer.position.set(st.ax,st.ay,st.az);scene.add(ajer);
+  // Set up MP character references
+  if(MP.active){
+    if(MP.isHost){MP.localChar=ajer;MP.remoteChar=player;}
+    else{MP.localChar=player;MP.remoteChar=ajer;}
+    MP.remotePos=null;MP.remoteMoving=false;
+  }
   document.getElementById('episode-label').textContent=TITLES[n][1]+": "+TITLES[n][0];
   G.si=0;G.di=0;
   // Set camera to correct starting position immediately
@@ -933,9 +1212,13 @@ function loadEp(n){
   G.camLk=new THREE.Vector3(cs.lx,cs.ly,cs.lz);
   camera.lookAt(G.camLk);
   setTimeout(function(){showDlg(0,0);},600);
+  // Host sends state sync after episode load
+  if(MP.active&&MP.isHost){MP.lastSync=0;mpSendStateSync();}
 }
 function transitionEp(n){
   if(n>=5){showEnd();return;}
+  // Host broadcasts episode transition
+  if(MP.active&&MP.isHost)mpSend({t:'ep_trans',ep:n,title:TITLES[n][0],sub:TITLES[n][1]});
   var el=document.getElementById('ep-trans');
   document.getElementById('et-title').textContent=TITLES[n][0];
   document.getElementById('et-sub').textContent=TITLES[n][1];
@@ -944,6 +1227,7 @@ function transitionEp(n){
   setTimeout(function(){el.classList.remove('active');},2400);
 }
 function showEnd(){
+  if(MP.active&&MP.isHost)mpSend({t:'game_end'});
   document.getElementById('end-eggs').textContent="Easter Eggs Found: "+G.eggN+"/4";
   document.getElementById('end-screen').style.display='flex';
 }
@@ -963,7 +1247,11 @@ function isBlocked(x,z,py){
 }
 
 // ===================== INPUT =====================
-document.addEventListener('keydown',function(e){G.keys[e.key.toLowerCase()]=true;if(e.key===' '||e.key==='Enter'){e.preventDefault();advDlg();}});
+document.addEventListener('keydown',function(e){
+  G.keys[e.key.toLowerCase()]=true;
+  if(e.key==='Enter'&&document.getElementById('join-panel').classList.contains('active')){e.preventDefault();joinGame();return;}
+  if(e.key===' '||e.key==='Enter'){e.preventDefault();advDlg();}
+});
 document.addEventListener('keyup',function(e){G.keys[e.key.toLowerCase()]=false;});
 document.addEventListener('click',function(){if(G.showing)advDlg();});
 
@@ -975,9 +1263,11 @@ function gameLoop(){
   var dt=Math.min(clock.getDelta(),0.05);
   var time=clock.getElapsedTime();
 
-  // === PLAYER MOVEMENT ===
+  // === LOCAL CHARACTER MOVEMENT ===
+  var lc=MP.active?MP.localChar:player;
+  var rc=MP.active?MP.remoteChar:null;
   var dx=0,dz=0,moving=false;
-  if(!G.showing&&!G.cutscene){
+  if(!G.showing&&!G.cutscene&&lc){
     if(G.keys['w']||G.keys['arrowup'])dz=-1;
     if(G.keys['s']||G.keys['arrowdown'])dz=1;
     if(G.keys['a']||G.keys['arrowleft'])dx=-1;
@@ -985,28 +1275,42 @@ function gameLoop(){
     if(dx||dz){
       moving=true;
       var len=Math.sqrt(dx*dx+dz*dz);dx/=len;dz/=len;
-      var nx=player.position.x+dx*SPEED*dt;
-      var nz=player.position.z+dz*SPEED*dt;
-      if(!isBlocked(nx,nz,player.position.y)){player.position.x=nx;player.position.z=nz;}
+      var nx=lc.position.x+dx*SPEED*dt;
+      var nz=lc.position.z+dz*SPEED*dt;
+      if(!isBlocked(nx,nz,lc.position.y)){lc.position.x=nx;lc.position.z=nz;}
       // Bed drop (ep1)
-      if(G.ep===0&&player.position.y>0.3){
-        var onBed=player.position.x>-2.3&&player.position.x<2.3&&player.position.z<-2.7&&player.position.z>-6.3;
+      if(G.ep===0&&lc.position.y>0.3){
+        var onBed=lc.position.x>-2.3&&lc.position.x<2.3&&lc.position.z<-2.7&&lc.position.z>-6.3;
         if(!onBed)G.dropping=true;
       }
-      if(G.dropping&&player.position.y>0.01){player.position.y-=dt*5;if(player.position.y<=0){player.position.y=0;G.dropping=false;}}
-      var ta=Math.atan2(dx,dz);var diff=ta-player.rotation.y;
+      if(G.dropping&&lc.position.y>0.01){lc.position.y-=dt*5;if(lc.position.y<=0){lc.position.y=0;G.dropping=false;}}
+      var ta=Math.atan2(dx,dz);var diff=ta-lc.rotation.y;
       while(diff>Math.PI)diff-=Math.PI*2;while(diff<-Math.PI)diff+=Math.PI*2;
-      player.rotation.y+=diff*8*dt;
+      lc.rotation.y+=diff*8*dt;
     }
   }
-  animC(player,dt,moving);
+  if(lc){lc.userData._moving=moving;animC(lc,dt,moving);}
+  // Send position over network
+  if(MP.active)mpSendPos();
+  // Interpolate remote character position
+  if(MP.active&&rc&&MP.remotePos){
+    rc.position.x+=(MP.remotePos.x-rc.position.x)*10*dt;
+    rc.position.y+=(MP.remotePos.y-rc.position.y)*10*dt;
+    rc.position.z+=(MP.remotePos.z-rc.position.z)*10*dt;
+    var rdiff=MP.remotePos.ry-rc.rotation.y;
+    while(rdiff>Math.PI)rdiff-=Math.PI*2;while(rdiff<-Math.PI)rdiff+=Math.PI*2;
+    rc.rotation.y+=rdiff*10*dt;
+    animC(rc,dt,MP.remoteMoving);
+  }
+  // In single player, still animate player as before
+  if(!MP.active)animC(player,dt,moving);
 
-  // === AJER AI ===
+  // === AJER AI (single-player only) ===
   var aM=false;
+  if(!MP.active){
   if(G.ep===0){
     // EP1 phases
     if(G.ph===1){
-      // Walk to kitchen via waypoints
       if(!G.wp){G.wp=[{x:0.8,z:-1},{x:5,z:1},{x:8.5,z:1},{x:14,z:-3}];G.wpI=0;}
       if(ajer.position.y>0.05){ajer.position.y-=dt*3;if(ajer.position.y<0)ajer.position.y=0;}
       var wp=G.wp[G.wpI];
@@ -1031,39 +1335,29 @@ function gameLoop(){
         else{G.ph=4;G.phT=time;G.rwp=null;if(!G.trig.ret){G.trig.ret=true;G.si=3;G.di=0;showDlg(3,0);}}
       }
     }else if(G.ph===4){
-      // Follow player
       var adx=player.position.x+1.5-ajer.position.x,adz=player.position.z-ajer.position.z,ad=Math.sqrt(adx*adx+adz*adz);
       if(ad>2){aM=true;ajer.position.x+=adx/ad*SPEED*0.5*dt;ajer.position.z+=adz/ad*SPEED*0.5*dt;}
       var aa=Math.atan2(adx,adz);ajer.rotation.y+=(aa-ajer.rotation.y)*3*dt;
-      // Auto-advance after 3s following
       if(!G.trig.done&&!G.showing&&time-G.phT>15){G.trig.done=true;G.si=4;G.di=0;showDlg(4,0);}
     }
   }else if(G.ep===4&&G.cutscene){
-    // EP5 CUTSCENE: both sitting on couch
-    // Jarin sits on left, Ajer on right
     player.position.x+=(-.8-player.position.x)*3*dt;
     player.position.z+=(-3-player.position.z)*3*dt;
     player.position.y=0.65;
-    player.rotation.y+=(-Math.PI-player.rotation.y)*3*dt; // face TV (negative z)
+    player.rotation.y+=(-Math.PI-player.rotation.y)*3*dt;
     ajer.position.x+=(0.8-ajer.position.x)*3*dt;
     ajer.position.z+=(-3-ajer.position.z)*3*dt;
     ajer.position.y=0.65;
     ajer.rotation.y+=(-Math.PI-ajer.rotation.y)*3*dt;
-    // When sleep EE triggers, lean Jarin toward Ajer
     if(G.asleep){
-      // Lean Jarin's head toward Ajer
       player.rotation.z+=(0.35-player.rotation.z)*2*dt;
-      player.position.x+=(0-player.position.x)*2*dt; // slide slightly toward Ajer
-      // Close eyes (make eye spheres tiny)
+      player.position.x+=(0-player.position.x)*2*dt;
       if(player.userData.eyeL){player.userData.eyeL.scale.set(0.01,0.3,1);player.userData.eyeR.scale.set(0.01,0.3,1);}
-      // Flip smile to a peaceful sleeping line
       if(player.userData.smile){player.userData.smile.scale.set(0.6,0.3,0.6);}
     }
     aM=false;
   }else{
-    // EP2-4: Ajer follows player (and EP5 before cutscene)
     if(G.ep===4&&!G.cutscene){
-      // EP5 pre-cutscene: also follow
       var adx=player.position.x+1.5-ajer.position.x,adz=player.position.z-ajer.position.z,ad=Math.sqrt(adx*adx+adz*adz);
       if(ad>2){aM=true;ajer.position.x+=adx/ad*SPEED*0.5*dt;ajer.position.z+=adz/ad*SPEED*0.5*dt;}
       var aa=Math.atan2(adx,adz);ajer.rotation.y+=(aa-ajer.rotation.y)*3*dt;
@@ -1074,48 +1368,104 @@ function gameLoop(){
     }
   }
   animC(ajer,dt,aM);
+  } // end !MP.active
+
+  // === MULTIPLAYER EP1 LOGIC (Host only) ===
+  if(MP.active&&MP.isHost&&G.ep===0){
+    if(G.ph===1){
+      // Phase 1->2: Guest (Jarin) near kitchen area OR 15s timeout
+      if(player.position.x>10||time-G.phT>15){
+        if(!G.trig.cook){G.trig.cook=true;G.ph=2;G.phT=time;G.si=2;G.di=0;showDlg(2,0);}
+      }
+    }else if(G.ph===2){
+      if(time-G.phT>10){G.ph=3;G.phT=time;}
+    }else if(G.ph===3){
+      // Phase 3->4: Guest near Host (distance<3) OR 15s timeout
+      var adx=player.position.x-ajer.position.x,adz=player.position.z-ajer.position.z;
+      var dist=Math.sqrt(adx*adx+adz*adz);
+      if(dist<3||time-G.phT>15){
+        if(!G.trig.ret){G.trig.ret=true;G.ph=4;G.phT=time;G.si=3;G.di=0;showDlg(3,0);}
+      }
+    }else if(G.ph===4){
+      if(!G.trig.done&&!G.showing&&time-G.phT>15){G.trig.done=true;G.si=4;G.di=0;showDlg(4,0);}
+    }
+  }
+
+  // === MULTIPLAYER EP5 CUTSCENE ===
+  if(MP.active&&G.ep===4&&G.cutscene){
+    player.position.x+=(-.8-player.position.x)*3*dt;
+    player.position.z+=(-3-player.position.z)*3*dt;
+    player.position.y=0.65;
+    player.rotation.y+=(-Math.PI-player.rotation.y)*3*dt;
+    ajer.position.x+=(0.8-ajer.position.x)*3*dt;
+    ajer.position.z+=(-3-ajer.position.z)*3*dt;
+    ajer.position.y=0.65;
+    ajer.rotation.y+=(-Math.PI-ajer.rotation.y)*3*dt;
+    if(G.asleep){
+      player.rotation.z+=(0.35-player.rotation.z)*2*dt;
+      player.position.x+=(0-player.position.x)*2*dt;
+      if(player.userData.eyeL){player.userData.eyeL.scale.set(0.01,0.3,1);player.userData.eyeR.scale.set(0.01,0.3,1);}
+      if(player.userData.smile){player.userData.smile.scale.set(0.6,0.3,0.6);}
+    }
+  }
 
   // === TRIGGER CHECKS (EP2-5) ===
-  if(G.ep>0){
+  // In multiplayer, only the host runs trigger checks (using both positions)
+  // Guest receives trigger results via network messages
+  if(G.ep>0&&(!MP.active||MP.isHost)){
     var scr=SCRIPTS[G.ep];
     for(var i=1;i<scr.length;i++){
       var s=scr[i];var key="s"+G.ep+"_"+i;
       if(G.trig[key])continue;
       if(s.t==="pos"){
-        var d2=Math.pow(player.position.x-s.x,2)+Math.pow(player.position.z-s.z,2);
-        if(d2<s.r*s.r&&!G.showing){G.trig[key]=true;G.si=i;G.di=0;showDlg(i,0);}
+        // Check distance against both player (Jarin) and ajer positions
+        var d2j=Math.pow(player.position.x-s.x,2)+Math.pow(player.position.z-s.z,2);
+        var d2a=Math.pow(ajer.position.x-s.x,2)+Math.pow(ajer.position.z-s.z,2);
+        var d2=Math.min(d2j,d2a);
+        if(d2<s.r*s.r&&!G.showing){
+          G.trig[key]=true;G.si=i;G.di=0;showDlg(i,0);
+          if(MP.active)mpSend({t:'trigger',key:key,si:i,di:0,isEgg:false});
+        }
       }else if(s.t==="ee"){
         if(s.auto){
-          // Auto EE with delay
           if(!G.aeR){
             var prev="s"+G.ep+"_"+(i-1);
             if(G.trig[prev]&&!G.showing){
               if(G.aeT===0)G.aeT=time;
-              if(time-G.aeT>s.delay/1000){G.aeR=true;G.trig[key]=true;G.si=i;G.di=0;showDlg(i,0);foundEgg("ep"+G.ep);}
+              if(time-G.aeT>s.delay/1000){G.aeR=true;G.trig[key]=true;G.si=i;G.di=0;showDlg(i,0);foundEgg("ep"+G.ep);
+                if(MP.active)mpSend({t:'trigger',key:key,si:i,di:0,isEgg:true,eggName:"ep"+G.ep});
+              }
             }
           }
         }else{
-          var d2=Math.pow(player.position.x-s.x,2)+Math.pow(player.position.z-s.z,2);
-          if(d2<s.r*s.r&&!G.showing){G.trig[key]=true;G.si=i;G.di=0;showDlg(i,0);foundEgg("ep"+G.ep);}
+          var d2j=Math.pow(player.position.x-s.x,2)+Math.pow(player.position.z-s.z,2);
+          var d2a=Math.pow(ajer.position.x-s.x,2)+Math.pow(ajer.position.z-s.z,2);
+          var d2=Math.min(d2j,d2a);
+          if(d2<s.r*s.r&&!G.showing){G.trig[key]=true;G.si=i;G.di=0;showDlg(i,0);foundEgg("ep"+G.ep);
+            if(MP.active)mpSend({t:'trigger',key:key,si:i,di:0,isEgg:true,eggName:"ep"+G.ep});
+          }
         }
       }else if(s.t==="next"||s.t==="end"){
-        // ALL previous triggers (including easter eggs) must be done
         var allDone=true;
         for(var j=1;j<i;j++){if(!G.trig["s"+G.ep+"_"+j]){allDone=false;break;}}
-        if(allDone&&!G.showing){G.trig[key]=true;G.si=i;G.di=0;showDlg(i,0);}
+        if(allDone&&!G.showing){G.trig[key]=true;G.si=i;G.di=0;showDlg(i,0);
+          if(MP.active)mpSend({t:'trigger',key:key,si:i,di:0,isEgg:false});
+        }
       }
     }
   }
 
   // === EP5 CUTSCENE MANAGEMENT ===
-  if(G.ep===4){
+  if(G.ep===4&&(!MP.active||MP.isHost)){
     // Activate cutscene when pos trigger (couch) fires and dialogue ends
     if(G.trig["s4_1"]&&!G.cutscene&&!G.showing){
       G.cutscene=true;G.cutT=time;
+      if(MP.active)mpSend({t:'cutscene',active:true,asleep:false});
     }
     // Set asleep when EE fires
     if(G.trig["s4_2"]&&!G.asleep){
       G.asleep=true;
+      if(MP.active)mpSend({t:'cutscene',active:true,asleep:true});
       // Add zzz sprite above Jarin
       var zCv=document.createElement('canvas');zCv.width=128;zCv.height=64;var zCx=zCv.getContext('2d');
       zCx.fillStyle='#C77DFF';zCx.font='bold 28px system-ui';zCx.textAlign='center';zCx.fillText('💤 zzz...',64,40);
@@ -1136,9 +1486,12 @@ function gameLoop(){
   });
 
   // === CAMERA ===
+  // In MP mode, camera follows localChar; in single player, follows player (Jarin)
+  var camTarget=MP.active?MP.localChar:player;
+  if(!camTarget)camTarget=player;
   var cox=0,coy=10,coz=12,lky=1;
   if(G.ep===0){
-    var px=player.position.x;
+    var px=camTarget.position.x;
     if(px<-8){cox=0;coy=9;coz=6;lky=1.5;}
     else if(px>8){cox=-5;coy=9;coz=8;}
     else{cox=-3;coy=10;coz=12;}
@@ -1147,24 +1500,23 @@ function gameLoop(){
   }else if(G.ep===2){
     coy=8;coz=14;
   }else if(G.ep===3){
-    // EP4: camera inside restaurant, or shifted when outside (left side exit)
-    if(player.position.x<-10){
-      // Outside: camera to the right of player, looking left at valet area
+    if(camTarget.position.x<-10){
       cox=6;coy=4;coz=3;lky=1.2;
     }else{
       cox=0;coy=6;coz=8;
     }
   }else if(G.ep===4){
-    // EP5: walls at z:-8 and z:8 — camera must stay inside
     if(G.cutscene){cox=3;coy=2.5;coz=3;lky=1.2;}
     else{cox=2;coy=4;coz=4;}
   }
-  var cp=new THREE.Vector3(player.position.x+cox,coy,player.position.z+coz);
-  var lt=new THREE.Vector3(player.position.x,lky,player.position.z);
+  var cp=new THREE.Vector3(camTarget.position.x+cox,coy,camTarget.position.z+coz);
+  var lt=new THREE.Vector3(camTarget.position.x,lky,camTarget.position.z);
   camera.position.lerp(cp,2.5*dt);
   if(!G.camLk)G.camLk=lt.clone();
   G.camLk.lerp(lt,2.5*dt);
   camera.lookAt(G.camLk);
+  // Periodic state sync in MP
+  if(MP.active&&MP.isHost)mpSendStateSync();
 
   renderer.render(scene,camera);
 }
