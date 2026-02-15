@@ -99,6 +99,7 @@ canvas{display:block}
 </div>
 <div id="mp-hud"><div id="conn-status" class="connected">Connected</div><div id="role-label">Playing as: ---</div></div>
 <div id="dc-overlay"><h2>Disconnected</h2><p id="dc-msg">Your partner has disconnected. The game will continue in single-player mode.</p><button class="menu-btn small" onclick="document.getElementById('dc-overlay').classList.remove('active')">Continue</button></div>
+<button id="advance-btn" style="position:fixed;bottom:30px;right:30px;z-index:25;display:none;background:linear-gradient(135deg,#E74C3C,#C0392B);color:#FFF;border:none;padding:14px 28px;font-size:15px;border-radius:30px;cursor:pointer;font-weight:600;letter-spacing:1px;box-shadow:0 0 20px rgba(231,76,60,0.4);font-family:inherit">Advance Story ▸</button>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
 <script>
@@ -150,7 +151,7 @@ var SCRIPTS=[
 ]];
 
 // ===================== STATE =====================
-var G={ep:-1,si:0,di:0,showing:false,keys:{},trig:{},eggs:{},eggN:0,started:false,
+var G={ep:-1,si:0,di:0,showing:false,keys:{},trig:{},eggs:{},eggN:0,started:false,mpStep:1,
   ph:0,phT:0,wp:null,wpI:0,rwp:null,rwI:0,typing:false,tyI:null,fullTxt:"",
   camLk:null,aeT:0,aeR:false,dropping:false,cutscene:false,cutT:0,asleep:false};
 var scene,camera,renderer,clock,player,ajer,epO=[];
@@ -324,7 +325,7 @@ function handleMessage(data){
     case 'state_sync':
       if(!MP.isHost){
         G.trig=data.trig||{};G.eggs=data.eggs||{};G.eggN=data.eggN||0;
-        G.ph=data.ph||0;G.cutscene=data.cutscene||false;G.asleep=data.asleep||false;
+        G.ph=data.ph||0;G.cutscene=data.cutscene||false;G.asleep=data.asleep||false;G.mpStep=data.mpStep||1;
         document.getElementById('egg-counter').textContent='\u{1F31F} Eggs: '+G.eggN+'/4';
       }
       break;
@@ -373,7 +374,7 @@ function mpSendStateSync(){
   var now=performance.now();
   if(now-MP.lastSync<5000)return;
   MP.lastSync=now;
-  mpSend({t:'state_sync',trig:G.trig,eggs:G.eggs,eggN:G.eggN,ph:G.ph,cutscene:G.cutscene,asleep:G.asleep});
+  mpSend({t:'state_sync',trig:G.trig,eggs:G.eggs,eggN:G.eggN,ph:G.ph,cutscene:G.cutscene,asleep:G.asleep,mpStep:G.mpStep});
 }
 
 // ===================== THREE SETUP =====================
@@ -1160,10 +1161,12 @@ function showDlg(si,di){
   G.showing=true;
   // Host broadcasts dialogue to guest
   if(MP.active&&MP.isHost)mpSend({t:'dlg_show',si:si,di:di,speaker:d.s||'',text:d.t});
+  updateAdvanceBtn();
 }
 function hideDlg(){
   document.getElementById('dialogue-box').classList.remove('active');G.showing=false;
   if(MP.active&&MP.isHost)mpSend({t:'dlg_hide'});
+  updateAdvanceBtn();
 }
 function advDlg(){
   if(!G.showing)return;
@@ -1181,12 +1184,12 @@ function advDlg(){
   // Post-dialogue actions
   if(scr.t==="next"){transitionEp(G.ep+1);}
   else if(scr.t==="end"){showEnd();}
-  else if(scr.t==="start"&&G.ep===0){G.ph=1;G.phT=clock.getElapsedTime();G.si=1;G.di=0;showDlg(1,0);}
+  else if(scr.t==="start"&&G.ep===0&&!MP.active){G.ph=1;G.phT=clock.getElapsedTime();G.si=1;G.di=0;showDlg(1,0);}
 }
 
 // ===================== EPISODE MANAGEMENT =====================
 function loadEp(n){
-  clearEp();G.ep=n;G.si=0;G.di=0;G.trig={};G.ph=0;G.phT=0;G.wp=null;G.wpI=0;G.rwp=null;G.rwI=0;G.dropping=false;G.aeT=0;G.aeR=false;G.cutscene=false;G.cutT=0;G.asleep=false;
+  clearEp();G.ep=n;G.si=0;G.di=0;G.trig={};G.ph=0;G.phT=0;G.wp=null;G.wpI=0;G.rwp=null;G.rwI=0;G.dropping=false;G.aeT=0;G.aeR=false;G.cutscene=false;G.cutT=0;G.asleep=false;G.mpStep=1;
   var o=OUTFITS[n];var st=STARTS[n];
   try{[buildEp1,buildEp2,buildEp3,buildEp4,buildEp5][n]();}catch(e){console.error("Build EP"+n+" failed:",e);}
   player=mkChar("jarin",o.j);player.position.set(st.jx,st.jy,st.jz);scene.add(player);
@@ -1230,10 +1233,42 @@ function showEnd(){
   if(MP.active&&MP.isHost)mpSend({t:'game_end'});
   document.getElementById('end-eggs').textContent="Easter Eggs Found: "+G.eggN+"/4";
   document.getElementById('end-screen').style.display='flex';
+  var btn=document.getElementById('advance-btn');if(btn)btn.style.display='none';
 }
 function foundEgg(name){
   if(G.eggs[name])return;G.eggs[name]=true;G.eggN++;
   document.getElementById('egg-counter').textContent="🌟 Eggs: "+G.eggN+"/4";
+}
+
+// ===================== MP ADVANCE STEP =====================
+function mpAdvanceStep(){
+  if(!MP.active||!MP.isHost||G.showing||!G.started)return;
+  var scr=SCRIPTS[G.ep];
+  var idx=G.mpStep;
+  if(idx>=scr.length)return;
+  var s=scr[idx];
+  var key="s"+G.ep+"_"+idx;
+  G.trig[key]=true;
+  if(s.t==="ee")foundEgg("ep"+G.ep);
+  if(MP.connected)mpSend({t:'trigger',key:key,si:idx,di:0,isEgg:s.t==="ee",eggName:s.t==="ee"?"ep"+G.ep:undefined});
+  // For EP1, advance phase to keep camera/state consistent
+  if(G.ep===0){
+    if(idx===1){G.ph=1;}
+    else if(idx===2){G.ph=2;}
+    else if(idx===3){G.ph=3;}
+    else if(idx===4){G.ph=4;}
+  }
+  G.si=idx;G.di=0;showDlg(idx,0);
+  G.mpStep++;
+  updateAdvanceBtn();
+}
+function updateAdvanceBtn(){
+  var btn=document.getElementById('advance-btn');
+  if(!btn)return;
+  if(!MP.active||!MP.isHost||!G.started){btn.style.display='none';return;}
+  var scr=SCRIPTS[G.ep];
+  if(G.showing||G.mpStep>=scr.length){btn.style.display='none';return;}
+  btn.style.display='block';
 }
 
 // ===================== COLLISION (per episode) =====================
@@ -1370,27 +1405,6 @@ function gameLoop(){
   animC(ajer,dt,aM);
   } // end !MP.active
 
-  // === MULTIPLAYER EP1 LOGIC (Host only) ===
-  if(MP.active&&MP.isHost&&G.ep===0){
-    if(G.ph===1){
-      // Phase 1->2: Guest (Jarin) near kitchen area OR 15s timeout
-      if(player.position.x>10||time-G.phT>15){
-        if(!G.trig.cook){G.trig.cook=true;G.ph=2;G.phT=time;G.si=2;G.di=0;showDlg(2,0);}
-      }
-    }else if(G.ph===2){
-      if(time-G.phT>10){G.ph=3;G.phT=time;}
-    }else if(G.ph===3){
-      // Phase 3->4: Guest near Host (distance<3) OR 15s timeout
-      var adx=player.position.x-ajer.position.x,adz=player.position.z-ajer.position.z;
-      var dist=Math.sqrt(adx*adx+adz*adz);
-      if(dist<3||time-G.phT>15){
-        if(!G.trig.ret){G.trig.ret=true;G.ph=4;G.phT=time;G.si=3;G.di=0;showDlg(3,0);}
-      }
-    }else if(G.ph===4){
-      if(!G.trig.done&&!G.showing&&time-G.phT>15){G.trig.done=true;G.si=4;G.di=0;showDlg(4,0);}
-    }
-  }
-
   // === MULTIPLAYER EP5 CUTSCENE ===
   if(MP.active&&G.ep===4&&G.cutscene){
     player.position.x+=(-.8-player.position.x)*3*dt;
@@ -1412,7 +1426,7 @@ function gameLoop(){
   // === TRIGGER CHECKS (EP2-5) ===
   // In multiplayer, only the host runs trigger checks (using both positions)
   // Guest receives trigger results via network messages
-  if(G.ep>0&&(!MP.active||MP.isHost)){
+  if(G.ep>0&&!MP.active){
     var scr=SCRIPTS[G.ep];
     for(var i=1;i<scr.length;i++){
       var s=scr[i];var key="s"+G.ep+"_"+i;
@@ -1533,6 +1547,7 @@ function beginGame(){
   },1000);
 }
 initThree();gameLoop();
+document.getElementById('advance-btn').addEventListener('click',function(e){e.stopPropagation();mpAdvanceStep();});
 </script>
 </body>
 </html>
